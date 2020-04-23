@@ -14,7 +14,6 @@ version="${FLAGS_k8s_version}"
 [[ "${FLAGS_globalnet}" = "${FLAGS_TRUE}" ]] && globalnet=true || globalnet=false
 [[ "${FLAGS_registry_inmemory}" = "${FLAGS_TRUE}" ]] && registry_inmemory=true || registry_inmemory=false 
 cluster_settings="${FLAGS_cluster_settings}"
-echo "Running with: k8s_version=${version}, globalnet=${globalnet}, registry_inmemory=${registry_inmemory}, cluster_settings=${cluster_settings}"
 
 set -em
 
@@ -24,6 +23,8 @@ source ${SCRIPTS_DIR}/lib/utils
 # Always source the shared cluster settings, to set defaults in case something wasn't set in the provided settings
 source "${SCRIPTS_DIR}/lib/cluster_settings"
 [[ -z "${cluster_settings}" ]] || source ${cluster_settings}
+
+echo "Running with: clusters="${clusters[*]}", k8s_version=${version}, globalnet=${globalnet}, registry_inmemory=${registry_inmemory}, cluster_settings=${cluster_settings}"
 
 ### Functions ###
 
@@ -123,3 +124,4 @@ with_retries 3 run_all_clusters create_kind_cluster
 declare_kubeconfig
 run_subm_clusters deploy_weave_cni
 
+print_clusters_message
