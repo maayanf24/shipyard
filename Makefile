@@ -2,13 +2,19 @@ ifneq (,$(DAPPER_HOST_ARCH))
 
 # Running in Dapper
 
-CLUSTER_SETTINGS_FLAG = --cluster_settings $(DAPPER_SOURCE)/scripts/cluster_settings
-CLUSTERS_ARGS += $(CLUSTER_SETTINGS_FLAG)
-DEPLOY_ARGS += $(CLUSTER_SETTINGS_FLAG)
+ifeq (,$(findstring --cluster_settings,$(CLUSTERS_ARGS)))
+    CLUSTER_SETTINGS_FLAG = --cluster_settings $(DAPPER_SOURCE)/scripts/cluster_settings
+    CLUSTERS_ARGS += $(CLUSTER_SETTINGS_FLAG)
+    DEPLOY_ARGS += $(CLUSTER_SETTINGS_FLAG)
+endif
 
 include $(SHIPYARD_DIR)/Makefile.inc
 
 TARGETS := $(shell ls -p scripts | grep -v -e /)
+
+e2e:
+	$(MAKE) clusters CLUSTERS_ARGS="--cluster_settings $(DAPPER_SOURCE)/scripts/e2e_cluster_settings"
+	./scripts/kind-e2e/e2e.sh
 
 # Add any project-specific arguments here
 $(TARGETS):

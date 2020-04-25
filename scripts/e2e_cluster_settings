@@ -1,0 +1,9 @@
+. "${SCRIPTS_DIR}"/lib/source_only
+
+# Shipyard only needs 1 cluster for its E2E tests
+clusters=(cluster1)
+
+cluster_nodes['cluster1']="control-plane worker"
+
+# Don't install submariner where we don't need it
+cluster_subm['cluster1']="false"
