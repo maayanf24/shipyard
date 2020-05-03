@@ -4,12 +4,22 @@
 
 source /usr/share/shflags/shflags
 DEFINE_string 'cluster_settings' '' "Settings file to customize cluster deployments"
-DEFINE_string 'focus' '.*' 'Ginkgo focus for the E2E tests'
+DEFINE_string 'focus' '.*' "Ginkgo focus for the E2E tests"
+DEFINE_boolean 'lazy' true "Deploy the environment lazily (If false, don't do anything)"
+FLAGS_HELP="USAGE: $0 [--cluster_settings /path/to/settings] [--focus focus] [--[no]lazy] cluster [cluster ...]"
 FLAGS "$@" || exit $?
 eval set -- "${FLAGS_ARGV}"
 
 focus="${FLAGS_focus}"
 cluster_settings="${FLAGS_cluster_settings}"
+[[ "${FLAGS_lazy}" = "${FLAGS_TRUE}" ]] && lazy=true || lazy=false
+
+if [[ $# == 0 ]]; then
+    echo "At least one cluster to test on must be specified!"
+    exit 1
+fi
+
+clusters=("$@")
 
 set -em -o pipefail
 
@@ -23,7 +33,9 @@ source "${SCRIPTS_DIR}/lib/cluster_settings"
 ### Functions ###
 
 function deploy_env_once() {
-    if with_context cluster3 kubectl wait --for=condition=Ready pods -l app=submariner-engine -n "${SUBM_NS}" --timeout=3s > /dev/null 2>&1; then
+    [[ "${lazy}" = "true" ]] || return 0
+
+    if with_context "${clusters[0]}" kubectl wait --for=condition=Ready pods -l app=submariner-engine -n "${SUBM_NS}" --timeout=3s > /dev/null 2>&1; then
         echo "Submariner already deployed, skipping deployment..."
         return
     fi
@@ -32,10 +44,8 @@ function deploy_env_once() {
 }
 
 function generate_context_flags() {
-    for cluster in "${!cluster_subm[@]}"; do
-        if [[ "${cluster_subm[$cluster]}" = "true" ]]; then
-            printf " -dp-context $cluster"
-        fi
+    for cluster in ${clusters[*]}; do
+        printf " -dp-context $cluster"
     done
 }
 
